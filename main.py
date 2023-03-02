@@ -190,7 +190,8 @@ class DiffusionModel(pl.LightningModule):
         valid_loader = DataLoader(self.valid_set,
                                   batch_size=self.config.train.batch_size,
                                   shuffle=False,
-                                  pin_memory=True)
+                                  pin_memory=True,
+                                  num_workers=12)
 
         return valid_loader
 
@@ -250,7 +251,8 @@ if __name__ == '__main__':
             logger=comet_logger,
             accelerator="gpu",
             devices=args.n_gpu,
-            strategy="ddp"
+            strategy="ddp",
+            num_sanity_val_steps=0
         )
 
         trainer.fit(d3pm, ckpt_path=args.resume)

@@ -1,0 +1,4 @@
+loguru
+comet_ml
+pytorch_lightning
+ml_collections
