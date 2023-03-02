@@ -125,9 +125,11 @@ class DiffusionModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         img, _ = batch
+        print(image.shape)
+        word = img[1:4] ## word를 어떻게 정의할 것인가?
         # t = np.random.randint(size=(img.shape[0],), low=0, high=self.num_timesteps, dtype=np.int32)
         t = (torch.randint(low=0, high=(self.num_timesteps), size=(img.shape[0],))).to(img.device)
-        loss = self.diffusion.training_losses(self.model, img, t).mean()
+        loss = self.diffusion.training_losses(self.model, img, t, word).mean()
 
         accumulate(self.ema, self.model.module if isinstance(self.model, nn.DataParallel) else self.model,
                    self.ema_decay)
@@ -155,7 +157,7 @@ class DiffusionModel(pl.LightningModule):
         img, _ = batch
         # t = np.random.randint(size=(img.shape[0],), low=0, high=self.num_timesteps, dtype=np.int32)
         t = (torch.randint(low=0, high=(self.num_timesteps), size=(img.shape[0],))).to(img.device)
-        loss = self.diffusion.training_losses(self.ema, img, t).mean()
+        loss = self.diffusion.training_losses(self.ema, img, t, word).mean()
 
         bpd_dict = self.diffusion.calc_bpd_loop(self.ema, img)
         total_bpd = bpd_dict['total'].mean()
