@@ -149,7 +149,7 @@ if __name__ == '__main__':
     train_data, test_data = DiffusionLoader(tokenizer=tokenizer).my_load(task_name='lm1b', splits=['train', 'test'])
     train_data, dev_data = train_data.train_test_split(test_size=args.dev_size).values()
     print('!!!!!!!!!!!!!!!!!!!!!!!')
-    # logger = fastNLP.logger
+    logger = fastNLP.logger
     if dist.get_rank() == 0:
         print('# of train data: {}'.format(len(train_data)))
         print('Example:')
@@ -249,8 +249,8 @@ if __name__ == '__main__':
             dist.all_gather(loss_list, loss)
             if torch.stack(loss_list).isnan().any():
                 nan_count += 1
-                # logger.warning(f'NaN encountered {nan_count} times')
-                print(f'NaN encountered {nan_count} times')
+                logger.warning(f'NaN encountered {nan_count} times')
+                # print(f'NaN encountered {nan_count} times')
                 continue
             train_loss += loss.item()
             loss.backward()
@@ -262,8 +262,8 @@ if __name__ == '__main__':
 
             if dist.get_rank() == 0:
                 if i % args.logging_steps == args.logging_steps - 1:
-                    # logger.info(f'Loss at step {i} is {train_loss / args.logging_steps}')
-                    print(f'Loss at step {i} is {train_loss / args.logging_steps}')
+                    logger.info(f'Loss at step {i} is {train_loss / args.logging_steps}')
+                    # print(f'Loss at step {i} is {train_loss / args.logging_steps}')
                     fitlog.add_loss(train_loss / args.logging_steps, name='train_loss', step=i)
 
                     train_loss = .0
@@ -300,8 +300,8 @@ if __name__ == '__main__':
                                     dev_metrics[name] += temp
                                 else:
                                     nan_count_in_dev += 1
-                                    # logger.warning(f'NaN encountered {nan_count_in_dev} times in dev')
-                                    print(f'NaN encountered {nan_count_in_dev} times in dev')
+                                    logger.warning(f'NaN encountered {nan_count_in_dev} times in dev')
+                                    # print(f'NaN encountered {nan_count_in_dev} times in dev')
                         else:
                             for name in dev_metrics.keys():
                                 dist.gather(batch_dev_metrics[name].squeeze())
