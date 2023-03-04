@@ -13,7 +13,7 @@ from torch.optim import AdamW
 from torch.nn.utils.rnn import pad_sequence
 import fastNLP
 from tqdm import tqdm
-from sample import Categorical, WholeWordMasking
+from sampling import Categorical, WholeWordMasking
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 import math
@@ -56,9 +56,11 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
+    print("os.environ :",os.environ['LOCAL_RANK'])
     local_rank = int(os.environ['LOCAL_RANK'])
+    print("local_rank :",local_rank)
     device = torch.device("cuda", local_rank)
-
+    print('device :',device)
     torch.cuda.set_device(local_rank)
     dist.init_process_group(backend='nccl', timeout=datetime.timedelta(seconds=9600))
 
@@ -73,9 +75,9 @@ if __name__ == '__main__':
     if dist.get_rank() == 0:
         log_dir = './logs'
         fitlog.set_log_dir(log_dir)
-        fitlog.commit(__file__)
-        fitlog.add_hyper(args)
-        fitlog.add_hyper_in_file(__file__)
+        # fitlog.commit(__file__)
+        # fitlog.add_hyper(args)
+        # fitlog.add_hyper_in_file(__file__)
 
         save_path = f'./model_name_{args.model_name_or_path}_lr_{args.lr}_seed_{args.seed}_numsteps_{args.num_steps}_sample_{args.sample_strategy}_schedule_{args.schedule}_hybridlambda_{args.hybrid_lambda}_wordfreqlambda_{args.word_freq_lambda}_fromscratch_{args.from_scratch}_timestep_{args.timestep}_ckpts'
     if args.model_name_or_path in ['bert-base-uncased', 'bert-large-uncased']:
@@ -146,8 +148,8 @@ if __name__ == '__main__':
 
     train_data, test_data = DiffusionLoader(tokenizer=tokenizer).my_load(task_name='lm1b', splits=['train', 'test'])
     train_data, dev_data = train_data.train_test_split(test_size=args.dev_size).values()
-
-    logger = fastNLP.logger
+    print('!!!!!!!!!!!!!!!!!!!!!!!')
+    # logger = fastNLP.logger
     if dist.get_rank() == 0:
         print('# of train data: {}'.format(len(train_data)))
         print('Example:')
@@ -247,7 +249,8 @@ if __name__ == '__main__':
             dist.all_gather(loss_list, loss)
             if torch.stack(loss_list).isnan().any():
                 nan_count += 1
-                logger.warning(f'NaN encountered {nan_count} times')
+                # logger.warning(f'NaN encountered {nan_count} times')
+                print(f'NaN encountered {nan_count} times')
                 continue
             train_loss += loss.item()
             loss.backward()
@@ -259,7 +262,8 @@ if __name__ == '__main__':
 
             if dist.get_rank() == 0:
                 if i % args.logging_steps == args.logging_steps - 1:
-                    logger.info(f'Loss at step {i} is {train_loss / args.logging_steps}')
+                    # logger.info(f'Loss at step {i} is {train_loss / args.logging_steps}')
+                    print(f'Loss at step {i} is {train_loss / args.logging_steps}')
                     fitlog.add_loss(train_loss / args.logging_steps, name='train_loss', step=i)
 
                     train_loss = .0
@@ -296,7 +300,8 @@ if __name__ == '__main__':
                                     dev_metrics[name] += temp
                                 else:
                                     nan_count_in_dev += 1
-                                    logger.warning(f'NaN encountered {nan_count_in_dev} times in dev')
+                                    # logger.warning(f'NaN encountered {nan_count_in_dev} times in dev')
+                                    print(f'NaN encountered {nan_count_in_dev} times in dev')
                         else:
                             for name in dev_metrics.keys():
                                 dist.gather(batch_dev_metrics[name].squeeze())
