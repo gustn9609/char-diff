@@ -1,4 +1,4 @@
-import datasets
+import datasets as ds
 import os
 from functools import partial
 import torch
@@ -10,7 +10,7 @@ class DiffusionLoader:
         self.tokenizer = tokenizer
 
     def _load(self, task_name, split):
-        dataset = datasets.load_dataset('lm1b', split=split)
+        dataset = ds.load_dataset('lm1b', split=split)
         print(f'Example in {split} set:')
         print(dataset[0])
         dataset = dataset.map(partial(self.convert_to_features, tokenizer=self.tokenizer), batched=True, remove_columns='text')
@@ -45,14 +45,14 @@ class ConditionalLoader:
         }
 
     def load_original(self, split):
-        dataset = datasets.load_dataset(os.path.join(self.data_dir, self.task_name, f'{self.task_name}.py'), split=split)
+        dataset = ds.load_dataset(os.path.join(self.data_dir, self.task_name, f'{self.task_name}.py'), split=split)
         dataset = dataset.map(partial(self._convert_to_features_original, tokenizer=self.tokenizer), batched=True, load_from_cache_file=False)
         print(f'Example in {split} set:')
         print(dataset[0])
         return dataset
 
     def _load(self, split):
-        dataset = datasets.load_dataset(os.path.join(self.data_dir, self.task_name, f'{self.task_name}.py'), split=split)
+        dataset = ds.load_dataset(os.path.join(self.data_dir, self.task_name, f'{self.task_name}.py'), split=split)
         if self.return_source_length:
             dataset = dataset.map(partial(self.add_original_src_length, tokenizer=self.tokenizer))
         dataset = dataset.map(self.add_prompt)
@@ -154,7 +154,7 @@ class DiffusionLoaderWithElectra(DiffusionLoader):
         self.electra_model = electra_model
 
     def _load(self, task_name, split):
-        dataset = datasets.load_dataset(f'./dataloaders/{task_name}.py', split=split)
+        dataset = ds.load_dataset(f'./dataloaders/{task_name}.py', split=split)
         print(f'Example in {split} set:')
         print(dataset[0])
         dataset = dataset.map(partial(self.new_convert_to_features, model_tokenizer=self.tokenizer, electra_tokenizer=self.electra_tokenizer, electra_model=self.electra_model), batched=True, remove_columns='text')
