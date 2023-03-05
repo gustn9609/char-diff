@@ -25,6 +25,7 @@ import torchvision.transforms as T
 import torchvision.datasets
 import numpy as np
 from torch.utils.data import Subset
+import datasets
 TRAINSUBSET = 0
 
 class ReshapeTransform:
@@ -75,3 +76,27 @@ def get_train_data(conf):
             eval_set = Subset(eval_set, limit_size)
 
     return train_set, eval_set
+
+class DiffusionLoader:
+    def __init__(self, tokenizer):
+        self.tokenizer = tokenizer
+
+    def _load(self, task_name, split):
+        dataset = datasets.load_dataset('lm1b', split=split)
+        print(f'Example in {split} set:')
+        print(dataset[0])
+        dataset = dataset.map(partial(self.convert_to_features, tokenizer=self.tokenizer), batched=True, remove_columns='text')
+        return dataset
+
+    def my_load(self, task_name, splits):
+        return [self._load(task_name, name) for name in splits]
+
+    @staticmethod
+    def convert_to_features(example_batch, tokenizer):
+        input_encodings = tokenizer.batch_encode_plus(example_batch['text'], max_length=128, truncation=True, add_special_tokens=False)
+        encodings = {
+            'input_ids': input_encodings['input_ids'],
+            'attention_mask': input_encodings['attention_mask'],
+        }
+
+        return 

@@ -34,7 +34,7 @@ import json
 import argparse
 
 import model
-import datasets
+import data_sets
 from diffusion_categorical import make_diffusion
 from config import get_config
 
@@ -64,7 +64,7 @@ class DiffusionModel(pl.LightningModule):
         self.config = config
         self.exp_dir = exp_dir
 
-        assert self.config.dataset.name in {'cifar10', 'MockCIFAR10'}
+        assert self.config.dataset.name in {'cifar10', 'MockCIFAR10', 'lm1b'}
         self.num_bits = 8
 
         # Ensure that max_time in model and num_timesteps in the betas are the same.
@@ -87,7 +87,7 @@ class DiffusionModel(pl.LightningModule):
             dropout=self.config.model.args.dropout,
             model_output=self.config.model.args.model_output,
             num_pixel_vals=self.config.model.args.num_pixel_vals,
-            img_size=self.config.dataset.resolution
+            # img_size=self.config.dataset.resolution
         )
 
         self.ema = model.UNet(
@@ -101,7 +101,7 @@ class DiffusionModel(pl.LightningModule):
             dropout=self.config.model.args.dropout,
             model_output=self.config.model.args.model_output,
             num_pixel_vals=self.config.model.args.num_pixel_vals,
-            img_size=self.config.dataset.resolution
+            # img_size=self.config.dataset.resolution
         )
 
         # Build Diffusion model
@@ -109,7 +109,7 @@ class DiffusionModel(pl.LightningModule):
 
     def setup(self, stage):
 
-        self.train_set, self.valid_set = datasets.get_train_data(self.config)
+        self.train_set, self.valid_set = data_sets.get_train_data(self.config)
 
     def forward(self, x):
         return self.diffusion.p_sample_loop(self.model, x.shape)
@@ -177,7 +177,8 @@ class DiffusionModel(pl.LightningModule):
         self.logger.log_metrics({"prior bpd": avg_prior_bpd}, step=self.global_step)
 
         # sample
-        shape = (64, 3, self.config.dataset.resolution, self.config.dataset.resolution)
+        # shape = (64, 3, self.config.dataset.resolution, self.config.dataset.resolution)
+        shape = (64, 3)
         sample = samples_fn(self.ema, self.diffusion, shape)
 
         grid = make_grid(sample['samples'], nrow=8)
