@@ -14,7 +14,7 @@ import diffusion_condition
 from torch.optim import AdamW
 import fastNLP
 from tqdm import tqdm
-from sample import Categorical, WholeWordMasking
+from sampling import Categorical, WholeWordMasking
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 import datetime
